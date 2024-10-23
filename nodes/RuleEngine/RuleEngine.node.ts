@@ -15,7 +15,7 @@ import { ENABLE_LESS_STRICT_TYPE_VALIDATION } from './utils';
 import { looseTypeValidationProperty } from './utils';
 import { getTypeValidationParameter, getTypeValidationStrictness } from './utils';
 
-export class IfV2 implements INodeType {
+export class RuleEngine implements INodeType {
 	description: INodeTypeDescription;
 
 	constructor(baseDescription: INodeTypeBaseDescription) {

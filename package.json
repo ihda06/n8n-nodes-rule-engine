@@ -57,6 +57,7 @@
     "n8n-workflow": "*"
   },
   "dependencies": {
+    "@types/lodash": "^4.17.12",
     "lodash": "^4.17.21"
   }
 }
