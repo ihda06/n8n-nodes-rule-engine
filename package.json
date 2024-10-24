@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-rule-engine",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "rule engine",
   "keywords": [
     "n8n-community-node-package"

@@ -7,28 +7,31 @@ import {
 	type IExecuteFunctions,
 	type INodeExecutionData,
 	type INodeType,
-	type INodeTypeBaseDescription,
-	type INodeTypeDescription,
-	NodeConnectionType,
+	type INodeTypeDescription
 } from 'n8n-workflow';
 import { ENABLE_LESS_STRICT_TYPE_VALIDATION } from './utils';
-import { looseTypeValidationProperty } from './utils';
+// import { looseTypeValidationProperty } from './utils';
 import { getTypeValidationParameter, getTypeValidationStrictness } from './utils';
 
 export class RuleEngine implements INodeType {
 	description: INodeTypeDescription;
 
-	constructor(baseDescription: INodeTypeBaseDescription) {
+	constructor() {
 		this.description = {
-			...baseDescription,
-			version: [2, 2.1, 2.2],
+			displayName: 'Rule Engine',
+			name: 'ruleEngine',
+			icon: 'fa:map-signs',
+			iconColor: 'green',
+			group: ['transform'],
+			description: 'Grouping rule',
+			version: 1,
 			defaults: {
 				name: 'Rule Engine',
 				color: '#408000',
 			},
-			inputs: [NodeConnectionType.Main],
-			outputs: [NodeConnectionType.Main, NodeConnectionType.Main],
-			outputNames: ['true', 'false'],
+			inputs: ["main"],
+			outputs: ["main"],
+			outputNames: ['true'],
 			parameterPane: 'wide',
 			properties: [
 				{
@@ -46,37 +49,10 @@ export class RuleEngine implements INodeType {
 					},
 				},
 				{
-					...looseTypeValidationProperty,
-					default: false,
-					displayOptions: {
-						show: {
-							'@version': [{ _cnd: { gte: 2.1 } }],
-						},
-					},
-				},
-				{
-					displayName: 'Options',
-					name: 'options',
-					type: 'collection',
-					placeholder: 'Add option',
+					displayName: 'Result to Set',
+					name: 'assignments',
+					type: 'assignmentCollection',
 					default: {},
-					options: [
-						{
-							displayName: 'Ignore Case',
-							description: 'Whether to ignore letter case when evaluating conditions',
-							name: 'ignoreCase',
-							type: 'boolean',
-							default: true,
-						},
-						{
-							...looseTypeValidationProperty,
-							displayOptions: {
-								show: {
-									'@version': [{ _cnd: { lt: 2.1 } }],
-								},
-							},
-						},
-					],
 				},
 			],
 		};
