@@ -2,6 +2,7 @@ import { set } from 'lodash';
 
 import {
 	ApplicationError,
+	LoggerProxy as Logger,
 	NodeOperationError,
 	type IExecuteFunctions,
 	type INodeExecutionData,
@@ -9,7 +10,7 @@ import {
 	type INodeTypeDescription,
 } from 'n8n-workflow';
 import { ENABLE_LESS_STRICT_TYPE_VALIDATION } from './utils';
-// import { looseTypeValidationProperty } from './utils';
+
 import * as executor from './executor';
 import { INCLUDE, IncludeMods, SetNodeOptions } from './helpers/interfaces';
 import { getTypeValidationParameter, getTypeValidationStrictness } from './utils';
@@ -126,8 +127,13 @@ export class RuleEngine implements INodeType {
 	}
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+		Logger.info('RuleEngine.execute');
 		const trueItems: INodeExecutionData[] = [];
-		const minCondition = this.getInputData(0, 'conditions').length;
+
+		Logger.info(`RuleEngine.execute: ${this.getInputData(0, 'conditions').length}`);
+
+		this.logger.info('RuleEngine.execute2');
+		// const minCondition = this.getInputData(0, 'conditions').length;
 		this.getInputData(0, 'conditions').forEach((item, itemIndex) => {
 			try {
 				const options = this.getNodeParameter('options', itemIndex) as {
@@ -198,10 +204,6 @@ export class RuleEngine implements INodeType {
 			returnData.push(newItem);
 		}
 
-		if (trueItems.length != minCondition) {
-			return [returnData];
-		}
-
-		return [returnData];
+		return [returnData, trueItems];
 	}
 }
