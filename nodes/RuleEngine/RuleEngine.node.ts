@@ -130,9 +130,9 @@ export class RuleEngine implements INodeType {
 		Logger.info('RuleEngine.execute');
 		const trueItems: INodeExecutionData[] = [];
 
-		Logger.info(`RuleEngine.execute: ${this.getInputData(0, 'conditions').length}`);
+		// Logger.info(`RuleEngine.execute: ${this.getInputData(0, 'conditions').length}`);
 
-		this.logger.info('RuleEngine.execute2');
+		this.logger.info(`conditions input: ${this.getInputData(0, 'conditions').length}`);
 		// const minCondition = this.getInputData(0, 'conditions').length;
 		this.getInputData(0, 'conditions').forEach((item, itemIndex) => {
 			try {
@@ -165,6 +165,7 @@ export class RuleEngine implements INodeType {
 					trueItems.push(item);
 				}
 			} catch (error) {
+				this.logger.warn(`RuleEngine.execute: error: ${error}`);
 				if (this.continueOnFail()) {
 				} else {
 					if (error instanceof NodeOperationError) {
@@ -184,6 +185,8 @@ export class RuleEngine implements INodeType {
 		});
 
 		const results = this.getInputData(1, 'assignments');
+
+		this.logger.info(`results input :: ${results.length}`);
 		const returnData: INodeExecutionData[] = [];
 		for (let i = 0; i < results.length; i++) {
 			const includeOtherFields = this.getNodeParameter('includeOtherFields', i, false) as boolean;
