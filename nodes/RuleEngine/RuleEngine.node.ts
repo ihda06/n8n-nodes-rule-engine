@@ -2,7 +2,6 @@ import { set } from 'lodash';
 
 import {
 	ApplicationError,
-	LoggerProxy as Logger,
 	NodeOperationError,
 	type IExecuteFunctions,
 	type INodeExecutionData,
@@ -127,11 +126,10 @@ export class RuleEngine implements INodeType {
 	}
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-		Logger.info('RuleEngine.execute');
 		const trueItems: INodeExecutionData[] = [];
 
 		// Logger.info(`RuleEngine.execute: ${this.getInputData(0, 'conditions').length}`);
-
+		this.logger.info(`inputs ${this.getInputData().toString()}`);
 		this.logger.info(`conditions input: ${this.getInputData(0, 'conditions').length}`);
 		// const minCondition = this.getInputData(0, 'conditions').length;
 		this.getInputData(0, 'conditions').forEach((item, itemIndex) => {
