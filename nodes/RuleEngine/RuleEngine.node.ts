@@ -1,5 +1,4 @@
-
-import {set} from "lodash"
+import { set } from 'lodash';
 
 import {
 	ApplicationError,
@@ -7,12 +6,13 @@ import {
 	type IExecuteFunctions,
 	type INodeExecutionData,
 	type INodeType,
-	type INodeTypeDescription
+	type INodeTypeDescription,
 } from 'n8n-workflow';
 import { ENABLE_LESS_STRICT_TYPE_VALIDATION } from './utils';
 // import { looseTypeValidationProperty } from './utils';
+import * as executor from './executor';
+import { INCLUDE, IncludeMods, SetNodeOptions } from './helpers/interfaces';
 import { getTypeValidationParameter, getTypeValidationStrictness } from './utils';
-
 export class RuleEngine implements INodeType {
 	description: INodeTypeDescription;
 
@@ -29,8 +29,8 @@ export class RuleEngine implements INodeType {
 				name: 'Rule Engine',
 				color: '#408000',
 			},
-			inputs: ["main"],
-			outputs: ["main"],
+			inputs: ['main'],
+			outputs: ['main'],
 			outputNames: ['true'],
 			parameterPane: 'wide',
 			properties: [
@@ -54,15 +54,81 @@ export class RuleEngine implements INodeType {
 					type: 'assignmentCollection',
 					default: {},
 				},
+				{
+					displayName: 'Include Other Input Fields',
+					name: 'includeOtherFields',
+					type: 'boolean',
+					default: false,
+					description:
+						"Whether to pass to the output all the input fields (along with the fields set in 'Fields to Set')",
+				},
+				{
+					displayName: 'Input Fields to Include',
+					name: 'include',
+					type: 'options',
+					description: 'How to select the fields you want to include in your output items',
+					default: 'all',
+					displayOptions: {
+						hide: {
+							'/includeOtherFields': [false],
+						},
+					},
+					options: [
+						{
+							name: 'All',
+							value: INCLUDE.ALL,
+							description: 'Also include all unchanged fields from the input',
+						},
+						{
+							name: 'Selected',
+							value: INCLUDE.SELECTED,
+							description: 'Also include the fields listed in the parameter “Fields to Include”',
+						},
+						{
+							name: 'All Except',
+							value: INCLUDE.EXCEPT,
+							description: 'Exclude the fields listed in the parameter “Fields to Exclude”',
+						},
+					],
+				},
+				{
+					displayName: 'Fields to Include',
+					name: 'includeFields',
+					type: 'string',
+					default: '',
+					placeholder: 'e.g. fieldToInclude1,fieldToInclude2',
+					description:
+						'Comma-separated list of the field names you want to include in the output. You can drag the selected fields from the input panel.',
+					requiresDataPath: 'multiple',
+					displayOptions: {
+						show: {
+							include: ['selected'],
+						},
+					},
+				},
+				{
+					displayName: 'Fields to Exclude',
+					name: 'excludeFields',
+					type: 'string',
+					default: '',
+					placeholder: 'e.g. fieldToExclude1,fieldToExclude2',
+					description:
+						'Comma-separated list of the field names you want to exclude from the output. You can drag the selected fields from the input panel.',
+					requiresDataPath: 'multiple',
+					displayOptions: {
+						show: {
+							include: ['except'],
+						},
+					},
+				},
 			],
 		};
 	}
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const trueItems: INodeExecutionData[] = [];
-		const falseItems: INodeExecutionData[] = [];
-
-		this.getInputData().forEach((item, itemIndex) => {
+		const minCondition = this.getInputData(0, 'conditions').length;
+		this.getInputData(0, 'conditions').forEach((item, itemIndex) => {
 			try {
 				const options = this.getNodeParameter('options', itemIndex) as {
 					ignoreCase?: boolean;
@@ -91,12 +157,9 @@ export class RuleEngine implements INodeType {
 
 				if (pass) {
 					trueItems.push(item);
-				} else {
-					falseItems.push(item);
 				}
 			} catch (error) {
 				if (this.continueOnFail()) {
-					falseItems.push(item);
 				} else {
 					if (error instanceof NodeOperationError) {
 						throw error;
@@ -114,6 +177,31 @@ export class RuleEngine implements INodeType {
 			}
 		});
 
-		return [trueItems, falseItems];
+		const results = this.getInputData(1, 'assignments');
+		const returnData: INodeExecutionData[] = [];
+		for (let i = 0; i < results.length; i++) {
+			const includeOtherFields = this.getNodeParameter('includeOtherFields', i, false) as boolean;
+			const include = this.getNodeParameter('include', i, 'all') as IncludeMods;
+			const options = this.getNodeParameter('options', i, {});
+			const node = this.getNode();
+
+			options.include = includeOtherFields ? include : 'none';
+
+			const newItem = await executor.execute.call(
+				this,
+				results[i],
+				i,
+				options as SetNodeOptions,
+				node,
+			);
+
+			returnData.push(newItem);
+		}
+
+		if (trueItems.length != minCondition) {
+			return [returnData];
+		}
+
+		return [returnData];
 	}
 }
